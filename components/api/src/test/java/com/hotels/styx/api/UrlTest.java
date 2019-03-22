@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013-2018 Expedia Inc.
+  Copyright (C) 2013-2019 Expedia Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -71,6 +71,25 @@ public class UrlTest {
                 .authority(authority("someone", "example.com", 8080))
                 .build()
                 .toString()));
+    }
+
+    //here the query is encoded
+    @Test
+    public void shouldParseUrlsWithPercentEncodedQuery() {
+        Url url = url("http://g.com/user/abc?%25%25=XYZ(%27blah%27)=%25%25").build();
+        assertThat(url.path(), is("/user/abc"));
+        assertThat(url.query().isPresent(), is(true));
+        assertThat(url.query().get().parameters().get(0).toString(), is("%%=XYZ('blah')=%%"));
+    }
+
+    //here the %% in the query is not encoded, this is the situation we currently encounter,
+    //after unwise char encoding is applied
+    @Test
+    public void shouldParseUrlsWithPercent() {
+        Url url = url("http://g.com//user/abc?%%=XYZ(%27blah%27)=%%").build();
+        assertThat(url.path(), is("/user/abc"));
+        assertThat(url.query().isPresent(), is(true));
+        assertThat(url.query().get().parameters().get(0), is("%%=XYZ('blah')=%%>"));
     }
 
     @Test
@@ -258,6 +277,7 @@ public class UrlTest {
         assertThat(url(ENCODED_SPACE).build().encodedUri(), is(ENCODED_SPACE));
     }
 
+    //okhttp.HttpUrl doesn't meet this use case
     @Test
     public void shouldCreateAValidUrlIfAuthorityIsMissing() {
         Url url = new Url.Builder()

@@ -165,6 +165,7 @@ public final class NettyToStyxRequestDecoder extends MessageToMessageDecoder<Htt
 
     @VisibleForTesting
     LiveHttpRequest.Builder makeAStyxRequestFrom(HttpRequest request, Observable<ByteBuf> content) {
+        //encoding happens here
         Url url = url(unwiseCharEncoder.encode(request.uri()))
                 .build();
         LiveHttpRequest.Builder requestBuilder = new LiveHttpRequest.Builder()

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013-2018 Expedia Inc.
+  Copyright (C) 2013-2019 Expedia Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -58,6 +58,33 @@ public class ConfigurableUnwiseCharsEncoderTest {
         verify(logger).warn("Value contains unwise chars. you should fix this. raw={}, escaped={}: ",
                 "|}{",
                 "%7C}{");
+    }
+
+    //percent encodes percent chars for the query param
+    //unsure if this is correct behavior based on okhttp.HttpUrl
+    @Test
+    public void shouldEncodePercentMixedWithOtherUnwiseChars() throws Exception {
+        Logger logger = mock(Logger.class);
+        ConfigurableUnwiseCharsEncoder encoder = new ConfigurableUnwiseCharsEncoder(newStyxConfig("%,|"), logger);
+        String urlWithUnwiseChars = "/user/abc?%%=XYZ(|blah|)=%%";
+        assertThat(encoder.encode(urlWithUnwiseChars), is("/user/abc?%25%25=XYZ(%7Cblah%7C)=%25%25"));
+        verify(logger).warn("Value contains unwise chars. you should fix this. raw={}, escaped={}: ",
+                urlWithUnwiseChars,
+                "/user/abc?%25%25=XYZ(%7Cblah%7C)=%25%25");
+    }
+
+    //this is the hard part, because styx does encoding of urls that are partially encoded based on the unwise char configuration.
+    //It will double encode the encoded chars since the % is present in the config.
+    //It also does not accept %% as valid url chars because of using java.net.URL which will fail to parse those.
+    @Test
+    public void shouldEncodePercentMixedWithOtherChars() throws Exception {
+        Logger logger = mock(Logger.class);
+        ConfigurableUnwiseCharsEncoder encoder = new ConfigurableUnwiseCharsEncoder(newStyxConfig("%"), logger);
+        String urlWithUnwiseChars = "/user/abc?%%=XYZ(%27blah%27)=%%";
+        assertThat(encoder.encode(urlWithUnwiseChars), is("/user/abc?%%=XYZ(%27blah%27)=%%"));
+        verify(logger).warn("Value contains unwise chars. you should fix this. raw={}, escaped={}: ",
+                urlWithUnwiseChars,
+                "/user/abc?%%=XYZ(%27blah%27)=%%");
     }
 
     @Test

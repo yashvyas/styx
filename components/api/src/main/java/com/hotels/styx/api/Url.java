@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013-2018 Expedia Inc.
+  Copyright (C) 2013-2019 Expedia Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -446,6 +446,8 @@ public final class Url implements Comparable<Url> {
          * @return a new builder
          */
         public static Builder url(String value) {
+            //fails on urls of type: /user/abc?%%=XYZ(%27blah%27)=%%
+            //unwise char encoding does not handle this encoding case because it ends up double encoding other chars.
             URI uri = URI.create(value);
             return new Builder()
                     .scheme(uri.getScheme())
