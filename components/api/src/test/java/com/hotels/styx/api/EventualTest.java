@@ -88,4 +88,32 @@ public class EventualTest {
                 .expectNext("mapped error: ouch")
                 .verifyComplete();
     }
+
+    @Test
+    public void triggersOnEmit() {
+        StringBuffer init = new StringBuffer("hello");
+        Eventual<String> eventual =
+                Eventual.of("hello")
+                        .doOnEmit(item -> init.append(" world") );
+
+        StepVerifier.create(eventual)
+                .expectNext("hello")
+                .verifyComplete();
+
+        assertEquals("hello world", init.toString());
+    }
+
+    @Test
+    public void triggersOnError() {
+        StringBuffer init = new StringBuffer("hello");
+        Eventual<Object> eventual =
+                Eventual.error(new RuntimeException("ouch"))
+                        .doOnError(item -> init.append(" world"));
+
+        StepVerifier.create(eventual)
+                .expectError()
+                .verify();
+
+        assertEquals("hello world", init.toString());
+    }
 }

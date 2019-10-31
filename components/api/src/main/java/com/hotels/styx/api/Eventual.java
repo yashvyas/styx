@@ -20,6 +20,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -111,6 +112,26 @@ public final class Eventual<T> implements Publisher<T> {
     public Eventual<T> onError(Function<Throwable, ? extends Eventual<? extends T>> errorHandler) {
         return fromMono(Mono.from(publisher)
                 .onErrorResume(value -> Mono.from(errorHandler.apply(value))));
+    }
+
+    /**
+     * Add a behavior that is triggered when this eventual emits an item successfully.
+     *
+     * @param emitted - the callback to be executed when an item is emitted
+     * @return a new {@link Eventual} with the callback registered
+     */
+    public Eventual<T> doOnEmit(Consumer<T> emitted) {
+        return fromMono(Mono.from(publisher).doOnNext(emitted));
+    }
+
+    /**
+     * Add a behavior that is triggered when this eventual terminates with an error.
+     *
+     * @param emitted - a callback to be executed when the  {@link Throwable} that caused the termination
+     * @return a new {@link Eventual} with the callback registered
+     */
+    public Eventual<T> doOnError(Consumer<? super Throwable> emitted) {
+        return fromMono(Mono.from(publisher).doOnError(emitted));
     }
 
     /**
